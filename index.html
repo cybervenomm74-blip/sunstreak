@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sunstreak | Free Mood and Habit Tracker</title>
+<meta name="description" content="A free mood and habit tracker. Log how you feel in one tap, build streaks and see which habits go with your best days. No sign-up, and your data stays on your device.">
+<meta name="theme-color" content="#F2F4F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D141C" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%2316324F'/%3E%3Cpolyline points='112,340 184,298 256,256 328,214 400,172' fill='none' stroke='%2396A3B0' stroke-width='14' stroke-linejoin='round'/%3E%3Ccircle cx='112' cy='340' r='26' fill='%23A38BD1'/%3E%3Ccircle cx='184' cy='298' r='26' fill='%237FA8E0'/%3E%3Ccircle cx='256' cy='256' r='26' fill='%236CC4AE'/%3E%3Ccircle cx='328' cy='214' r='26' fill='%23E6BC55'/%3E%3Ccircle cx='400' cy='172' r='26' fill='%23F28A4C'/%3E%3C/svg%3E">
+<meta property="og:title" content="Sunstreak: free mood and habit tracker">
+<meta property="og:description" content="A free mood and habit tracker. Log how you feel in one tap, build streaks and see which habits go with your best days. No sign-up, and your data stays on your device.">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout concept: one narrow ledger column. Today's mood and habits on top, 30-day trends below. */
+:root{
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --font-body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --bg:#F2F4F7; --surface:#FFFFFF; --fg:#101B28; --muted:#586575; --line:#DCE1E8;
+  --navy:#16324F; --on-navy:#FFFFFF; --focus:#2F6BFF; --danger:#B3261E;
+  --h0:#E6EAF0; --h1:#B9C9DD; --h2:#7FA0C6; --h3:#43709F; --h4:#16324F;
+  --m1:#6D4C9F; --m2:#3F6FB5; --m3:#2E8E7B; --m4:#B98512; --m5:#D4571C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D141C; --surface:#151E29; --fg:#E8EDF3; --muted:#93A1B1; --line:#263341;
+    --navy:#8FB7E8; --on-navy:#0D141C; --focus:#7FA8FF; --danger:#F08A82;
+    --h0:#1C2733; --h1:#25405E; --h2:#31628F; --h3:#4F8BC4; --h4:#8FB7E8;
+    --m1:#A38BD1; --m2:#7FA8E0; --m3:#6CC4AE; --m4:#E6BC55; --m5:#F28A4C;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D141C; --surface:#151E29; --fg:#E8EDF3; --muted:#93A1B1; --line:#263341;
+  --navy:#8FB7E8; --on-navy:#0D141C; --focus:#7FA8FF; --danger:#F08A82;
+  --h0:#1C2733; --h1:#25405E; --h2:#31628F; --h3:#4F8BC4; --h4:#8FB7E8;
+  --m1:#A38BD1; --m2:#7FA8E0; --m3:#6CC4AE; --m4:#E6BC55; --m5:#F28A4C;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-body)}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font:700 28px/1.1 var(--font-display);letter-spacing:-.02em;margin:0}
+.sync{font:500 11px/1 var(--font-mono);color:var(--muted);text-align:right;min-width:0}
+.stepper{display:flex;align-items:center;gap:8px}
+.step{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
+.step[disabled]{opacity:.35;cursor:default}
+.dayname{flex:1;min-width:0;display:flex;flex-direction:column}
+.dayname strong{font:600 18px/1.2 var(--font-display);text-wrap:balance}
+.dayname span{font-size:12px;color:var(--muted)}
+.pill{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;flex:none}
+
+.banner{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.banner button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--fg)}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font:500 20px/1.2 var(--font-mono);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+h2{font:600 17px/1.2 var(--font-display);margin:0;letter-spacing:-.01em}
+.sub{font-size:12px;color:var(--muted);margin:0}
+
+.moods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.mood{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 2px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:13px;min-width:0}
+.mood i{display:block;width:14px;height:14px;border-radius:50%;background:var(--c)}
+.mood[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--c);font-weight:600;background:var(--surface)}
+.mood[aria-pressed="true"] i{transform:scale(1.35)}
+textarea{width:100%;resize:vertical;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px 12px}
+textarea::placeholder,input::placeholder{color:var(--muted)}
+
+.habits{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.hrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.hrow:first-child{border-top:0}
+.chk{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);display:grid;place-items:center;color:transparent}
+.chk[aria-checked="true"]{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.hmain{display:flex;flex-direction:column;gap:4px;min-width:0}
+.hname{font-weight:500;overflow-wrap:anywhere}
+.hsub{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dots{display:flex;gap:4px}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--h0);display:block}
+.dots i.on{background:var(--navy)}
+.rm{border:0;background:none;padding:2px 0;font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.rm.sure{color:var(--danger);font-weight:600}
+.streak{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.streak b{font:500 18px/1.1 var(--font-mono)}
+.streak small{font-size:11px;color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;margin:0}
+
+form.add{display:flex;gap:8px}
+form.add input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px 12px}
+.btn{border:0;border-radius:10px;background:var(--navy);color:var(--on-navy);padding:10px 16px;font-weight:600}
+
+.chart{width:100%;height:auto;display:block}
+.chart .ax{fill:var(--muted);font:16px var(--font-mono)}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .ln{stroke:var(--muted);stroke-width:1.5;fill:none;stroke-linejoin:round;stroke-linecap:round}
+.chart .ring{fill:none;stroke:var(--fg);stroke-width:1.5}
+.chart .c1{fill:var(--m1)} .chart .c2{fill:var(--m2)} .chart .c3{fill:var(--m3)} .chart .c4{fill:var(--m4)} .chart .c5{fill:var(--m5)}
+
+.hm{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(7,auto);grid-auto-flow:column;gap:4px}
+.hm i{display:block;aspect-ratio:1;border-radius:3px;background:var(--h0);max-width:100%}
+.hm i.l1{background:var(--h1)} .hm i.l2{background:var(--h2)} .hm i.l3{background:var(--h3)} .hm i.l4{background:var(--h4)}
+.hm i.fut{background:transparent;outline:1px dashed var(--line);outline-offset:-1px}
+.legend{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.legend i{width:12px;height:12px;border-radius:3px;display:block}
+
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.bar .nm{overflow-wrap:anywhere;font-size:14px}
+.bar .pc{font:500 13px var(--font-mono)}
+.bar .tr{grid-column:1/-1;height:8px;border-radius:4px;background:var(--h0);overflow:hidden}
+.bar .tr b{display:block;height:100%;background:var(--navy);border-radius:4px}
+.rn{width:100%;min-width:0;border:1px solid var(--focus);border-radius:8px;background:var(--bg);padding:6px 10px}
+.ins{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline;padding-top:10px;border-top:1px solid var(--line)}
+.ins:first-child{border-top:0;padding-top:0}
+.ins .nm{overflow-wrap:anywhere;font-size:14px}
+.ins .df{font:500 14px var(--font-mono)}
+.ins small{grid-column:1/-1;color:var(--muted);font-size:12px}
+.intro{display:flex;flex-direction:column;gap:10px}
+.intro .lead{font:600 17px/1.35 var(--font-display);margin:0;text-wrap:balance}
+.perks{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted)}
+.perks li{display:flex;align-items:center;gap:8px}
+.perks li::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--navy);flex:none}
+.foot{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.foot a{color:var(--muted)}
+.foot summary{cursor:pointer}
+.foot details[open]{flex-basis:100%}
+.foot details p{margin:8px 0 0;max-width:60ch}
+@media (prefers-reduced-motion:no-preference){
+  .mood,.chk,.mood i{transition:transform .12s,background-color .12s,box-shadow .12s}
+}
+</style>
+
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <h1>Sunstreak</h1>
+    <div class="sync" id="sync" role="status">Saved on this device</div>
+  </header>
+  <section class="intro" aria-label="About this app">
+    <p class="lead">Mark your mood and habits in under a minute, then see which habits lift your days.</p>
+    <ul class="perks">
+      <li>One tap to log your mood</li>
+      <li>Streaks that keep you going</li>
+      <li>Free, no sign-up, private</li>
+    </ul>
+  </section>
+
+
+  <div class="stepper">
+    <button class="step" id="prev" data-act="prev" aria-label="Previous day"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="dayname"><strong id="dayname"></strong><span id="daysub"></span></div>
+    <button class="pill" id="todaybtn" data-act="today" hidden>Back to today</button>
+    <button class="step" id="next" data-act="next" aria-label="Next day"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+
+  <div class="banner" id="banner" hidden>
+    <span>The charts below show sample history so you can see how they work.</span>
+    <button data-act="clear-sample">Clear sample data</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <section class="card" aria-labelledby="h-mood">
+    <h2 id="h-mood">How are you feeling?</h2>
+    <div class="moods" id="moods"></div>
+    <textarea id="note" rows="2" maxlength="280" placeholder="One line about the day (optional)" aria-label="Note for the day"></textarea>
+  </section>
+
+  <section class="card" aria-labelledby="h-habits">
+    <div>
+      <h2 id="h-habits">Habits</h2>
+      <p class="sub" id="habits-sub"></p>
+    </div>
+    <ul class="habits" id="habits"></ul>
+    <form class="add" id="addform">
+      <input id="habit-name" maxlength="40" placeholder="Add a habit, e.g. Stretch for 10 minutes" aria-label="New habit name" autocomplete="off">
+      <button class="btn" type="submit">Add</button>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="h-mood30">
+    <div>
+      <h2 id="h-mood30">Mood, last 30 days</h2>
+      <p class="sub" id="mood30-sub"></p>
+    </div>
+    <div id="moodchart"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-heat">
+    <div>
+      <h2 id="h-heat">Habit days, last 12 weeks</h2>
+      <p class="sub">Each column is a week with Monday at the top. Darker means more habits done.</p>
+    </div>
+    <div class="hm" id="heat"></div>
+    <div class="legend" aria-hidden="true">Fewer <i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i> More</div>
+  </section>
+
+  <section class="card" aria-labelledby="h-ins">
+    <div>
+      <h2 id="h-ins">What goes with a better mood</h2>
+      <p class="sub">Average mood on days you did a habit compared with days you did not. This shows a pattern, not a cause.</p>
+    </div>
+    <div class="bars" id="insights"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-cons">
+    <h2 id="h-cons">Consistency, last 30 days</h2>
+    <div class="bars" id="bars"></div>
+  </section>
+  <footer class="foot"><span>Free. No sign-up. Your data stays on this device.</span><details class="priv"><summary>Privacy</summary><p>Sunstreak has no accounts, no analytics and no tracking. Your moods, habits and notes are saved only in this browser on your device and are never sent to a server. Fonts load from Google Fonts, so Google sees your IP address when the page loads. Sunstreak is not a medical device or medical advice.</p></details></footer>
+</main>
+
+<script>
+(function(){
+'use strict';
+var KEY='daybook.v1';
+var MOODS=['Rough','Low','Okay','Good','Great'];
+var $=function(s){return document.querySelector(s);};
+var pad=function(n){return String(n).padStart(2,'0');};
+var keyOf=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+var fromKey=function(k){var p=k.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);};
+var addDays=function(k,n){var d=fromKey(k);d.setDate(d.getDate()+n);return keyOf(d);};
+var todayKey=function(){return keyOf(new Date());};
+var fmt=function(k,o){return fromKey(k).toLocaleDateString(undefined,o);};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var clone=function(o){return JSON.parse(JSON.stringify(o));};
+
+var STARTERS=[
+  {id:'h-water',name:'Drink 2 litres of water'},
+  {id:'h-walk',name:'Walk for 20 minutes'},
+  {id:'h-read',name:'Read 10 pages'},
+  {id:'h-sleep',name:'In bed by 11 pm'}
+];
+
+function makeSample(habits){
+  var s=7;
+  var rnd=function(){s=(s*1664525+1013904223)%4294967296;return s/4294967296;};
+  var logs={},t=todayKey();
+  for(var i=34;i>=1;i--){
+    var k=addDays(t,-i),dow=fromKey(k).getDay();
+    var m=3+(rnd()-0.45)*2.2+((dow===0||dow===6)?0.4:0)-(dow===1?0.4:0);
+    m=Math.max(1,Math.min(5,Math.round(m)));
+    var done=[];
+    habits.forEach(function(h,j){
+      var base=[0.85,0.6,0.5,0.7][j]||0.6;
+      var p=Math.min(0.95,Math.max(0.1,base+(m-3)*0.1));
+      if(rnd()<p)done.push(h.id);
+    });
+    if(rnd()<0.08)continue;
+    logs[k]={mood:m,note:'',done:done,s:1};
+  }
+  return logs;
+}
+function fresh(){
+  var habits=clone(STARTERS);
+  return {v:1,habits:habits,logs:makeSample(habits)};
+}
+function valid(o){return o&&typeof o==='object'&&Array.isArray(o.habits)&&o.logs&&typeof o.logs==='object';}
+
+var state=null,viewKey=todayKey(),pendingRemove=null,removeTimer=null,editing=null;
+
+function loadLocal(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(valid(o))return o;}}catch(e){}return null;}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+/* ---------- sync ---------- */
+var doc=null,writing=false,again=false,wtimer=null,dirty=false;
+function setStatus(t){$('#sync').textContent=t;}
+function queueRemote(){
+  if(!doc)return;
+  dirty=true;clearTimeout(wtimer);wtimer=setTimeout(flush,700);setStatus('Saving…');
+}
+function flush(){
+  if(writing){again=true;return Promise.resolve();}
+  writing=true;
+  return doc.set(clone(state)).then(function(){setStatus('Synced to your account');},function(){setStatus('Not synced. Saved on this device.');}).then(function(){
+    writing=false;
+    if(again){again=false;return flush();}
+    dirty=false;
+  });
+}
+function initRemote(){
+  if(!window.claude||typeof window.claude.use!=='function')return;
+  Promise.all([window.claude.use('user'),window.claude.use('db')]).then(function(r){
+    var user=r[0],db=r[1];
+    if(!user||!db)return null;
+    return user.id().then(function(id){
+      if(!id)return null;
+      doc=db.collection('data/users/'+id).doc('tracker');
+      return true;
+    });
+  }).then(function(ok){
+    if(!ok)return;
+    var first=true;
+    var t=setTimeout(function(){setStatus('Not synced yet. Saved on this device.');},10000);
+    doc.onSnapshot(function(snap){
+      if(snap.metadata.hasPendingWrites)return;
+      var confirmed=!snap.metadata.fromCache;
+      if(confirmed)clearTimeout(t);
+      if(snap.exists){
+        var remote=snap.data();
+        if(valid(remote)){
+          if(!dirty&&JSON.stringify(remote)!==JSON.stringify(state)){state=clone(remote);saveLocal();renderAll();}
+          if(confirmed)setStatus('Synced to your account');
+        }
+      }else if(confirmed&&first){
+        queueRemote();
+      }
+      if(confirmed)first=false;
+    },function(){clearTimeout(t);setStatus('Not synced. Saved on this device.');});
+  }).catch(function(){});
+}
+
+/* ---------- data helpers ---------- */
+function log(k,create){
+  if(!state.logs[k]){
+    if(!create)return null;
+    state.logs[k]={mood:0,note:'',done:[]};
+  }
+  return state.logs[k];
+}
+function isDone(hid,k){var l=state.logs[k];return !!(l&&l.done&&l.done.indexOf(hid)>=0);}
+function streak(hid,from){
+  var k=from,n=0;
+  if(!isDone(hid,k))k=addDays(k,-1);
+  while(isDone(hid,k)&&n<5000){n++;k=addDays(k,-1);}
+  return n;
+}
+function persist(re){saveLocal();queueRemote();if(re!==false)renderAll();}
+function hasSample(){for(var k in state.logs){if(state.logs[k].s)return true;}return false;}
+function avgMood(days){
+  var t=todayKey(),sum=0,n=0;
+  for(var i=0;i<days;i++){var l=state.logs[addDays(t,-i)];if(l&&l.mood){sum+=l.mood;n++;}}
+  return {avg:n?sum/n:0,n:n};
+}
+
+/* ---------- rendering ---------- */
+function renderTop(){
+  var t=todayKey(),isToday=viewKey===t;
+  $('#dayname').textContent=fmt(viewKey,{weekday:'long',day:'numeric',month:'long'});
+  $('#daysub').textContent=isToday?'Today':(viewKey>t?'':fmt(viewKey,{year:'numeric'})+' · editing a past day');
+  $('#todaybtn').hidden=isToday;
+  $('#next').disabled=viewKey>=t;
+  $('#banner').hidden=!hasSample();
+}
+function renderStats(){
+  var total=state.habits.length,done=0;
+  state.habits.forEach(function(h){if(isDone(h.id,viewKey))done++;});
+  var a=avgMood(7),best=0,t=todayKey();
+  state.habits.forEach(function(h){best=Math.max(best,streak(h.id,t));});
+  $('#stats').innerHTML=
+    '<div class="stat"><b>'+done+'/'+total+'</b><span>habits done</span></div>'+
+    '<div class="stat"><b>'+(a.n?a.avg.toFixed(1):'–')+'</b><span>mood, 7 days</span></div>'+
+    '<div class="stat"><b>'+best+'</b><span>best streak, days</span></div>';
+}
+function renderMoods(){
+  var l=log(viewKey),cur=l?l.mood:0,h='';
+  for(var i=1;i<=5;i++){
+    h+='<button class="mood" data-act="mood" data-v="'+i+'" aria-pressed="'+(cur===i)+'" style="--c:var(--m'+i+')"><i></i>'+MOODS[i-1]+'</button>';
+  }
+  $('#moods').innerHTML=h;
+  var note=$('#note');
+  if(document.activeElement!==note)note.value=l&&l.note?l.note:'';
+}
+function renderHabits(){
+  var ul=$('#habits');
+  $('#habits-sub').textContent=state.habits.length?'Tap a box to mark a habit done for this day.':'';
+  if(!state.habits.length){ul.innerHTML='<li class="empty">No habits yet. Add one below to start a streak.</li>';return;}
+  ul.innerHTML=state.habits.map(function(h){
+    var on=isDone(h.id,viewKey),dots='';
+    for(var i=6;i>=0;i--){var k=addDays(viewKey,-i);dots+='<i class="'+(isDone(h.id,k)?'on':'')+'" title="'+esc(fmt(k,{weekday:'short',day:'numeric',month:'short'}))+'"></i>';}
+    var n=streak(h.id,viewKey);
+    var sure=pendingRemove===h.id;
+    return '<li class="hrow">'+
+      '<button class="chk" role="checkbox" aria-checked="'+on+'" data-act="toggle" data-id="'+esc(h.id)+'" aria-label="'+esc(h.name)+'"><svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+      '<div class="hmain">'+(editing===h.id?'<input class="rn" id="rename-input" maxlength="40" value="'+esc(h.name)+'" data-id="'+esc(h.id)+'" aria-label="Habit name">':'<span class="hname">'+esc(h.name)+'</span>')+'<span class="hsub"><span class="dots" aria-label="Last 7 days">'+dots+'</span>'+
+      '<button class="rm" data-act="rename" data-id="'+esc(h.id)+'">Rename</button><button class="rm'+(sure?' sure':'')+'" data-act="rm" data-id="'+esc(h.id)+'">'+(sure?'Tap again to remove':'Remove')+'</button></span></div>'+
+      '<div class="streak"><b>'+n+'</b><small>day streak</small></div></li>';
+  }).join('');
+}
+function moodChart(){
+  var N=30,L=30,R=592,T=14,B=160,t=todayKey(),pts=[],any=0;
+  for(var i=0;i<N;i++){var k=addDays(t,-(N-1-i)),l=state.logs[k];var m=l&&l.mood?l.mood:0;if(m)any++;pts.push({i:i,k:k,m:m});}
+  var a=avgMood(30);
+  $('#mood30-sub').textContent=any?('Average '+a.avg.toFixed(1)+' across '+a.n+' logged days. 1 is Rough, 5 is Great.'):'';
+  if(!any){$('#moodchart').innerHTML='<p class="empty">Log a mood to start the trend line.</p>';return;}
+  var X=function(i){return L+i/(N-1)*(R-L);},Y=function(m){return B-(m-1)/4*(B-T);};
+  var s='<svg class="chart" viewBox="0 0 600 198" role="img" aria-label="Mood over the last 30 days">';
+  for(var g=1;g<=5;g++){s+='<line class="gl" x1="'+L+'" x2="'+R+'" y1="'+Y(g).toFixed(1)+'" y2="'+Y(g).toFixed(1)+'"/><text class="ax" x="'+(L-10)+'" y="'+(Y(g)+5).toFixed(1)+'" text-anchor="end">'+g+'</text>';}
+  var d='',prev=false;
+  pts.forEach(function(p){if(!p.m){prev=false;return;}d+=(prev?'L':'M')+X(p.i).toFixed(1)+' '+Y(p.m).toFixed(1)+' ';prev=true;});
+  s+='<path class="ln" d="'+d+'"/>';
+  var last=null;
+  pts.forEach(function(p){if(p.m){s+='<circle class="c'+p.m+'" cx="'+X(p.i).toFixed(1)+'" cy="'+Y(p.m).toFixed(1)+'" r="5"><title>'+esc(fmt(p.k,{day:'numeric',month:'short'}))+': '+MOODS[p.m-1]+'</title></circle>';last=p;}});
+  if(last)s+='<circle class="ring" cx="'+X(last.i).toFixed(1)+'" cy="'+Y(last.m).toFixed(1)+'" r="9"/>';
+  s+='<text class="ax" x="'+L+'" y="190" text-anchor="start">'+esc(fmt(pts[0].k,{day:'numeric',month:'short'}))+'</text>';
+  s+='<text class="ax" x="'+X(15).toFixed(1)+'" y="190" text-anchor="middle">'+esc(fmt(pts[15].k,{day:'numeric',month:'short'}))+'</text>';
+  s+='<text class="ax" x="'+R+'" y="190" text-anchor="end">Today</text></svg>';
+  $('#moodchart').innerHTML=s;
+}
+function renderHeat(){
+  var t=todayKey(),dow=(fromKey(t).getDay()+6)%7;
+  var start=addDays(t,-dow-11*7),total=state.habits.length,h='';
+  for(var w=0;w<12;w++){
+    for(var r=0;r<7;r++){
+      var k=addDays(start,w*7+r);
+      if(k>t){h+='<i class="fut"></i>';continue;}
+      var l=state.logs[k],n=0;
+      if(l&&l.done){state.habits.forEach(function(x){if(l.done.indexOf(x.id)>=0)n++;});}
+      var lv=(n&&total)?Math.min(4,Math.ceil(n/total*4)):0;
+      h+='<i class="l'+lv+'" title="'+esc(fmt(k,{weekday:'short',day:'numeric',month:'short'}))+': '+n+' of '+total+' habits"></i>';
+    }
+  }
+  $('#heat').innerHTML=h;
+}
+function longest(hid){
+  var keys=Object.keys(state.logs).sort();
+  if(!keys.length)return 0;
+  var k=keys[0],t=todayKey(),run=0,best=0,guard=0;
+  while(k<=t&&guard<6000){
+    guard++;
+    if(isDone(hid,k)){run++;if(run>best)best=run;}else{run=0;}
+    k=addDays(k,1);
+  }
+  return best;
+}
+function renderInsights(){
+  var el=$('#insights'),rows=[];
+  state.habits.forEach(function(h){
+    var a=0,an=0,b=0,bn=0;
+    for(var k in state.logs){
+      var l=state.logs[k];
+      if(!l.mood)continue;
+      if(l.done&&l.done.indexOf(h.id)>=0){a+=l.mood;an++;}else{b+=l.mood;bn++;}
+    }
+    if(an>=5&&bn>=5)rows.push({name:h.name,diff:a/an-b/bn,a:a/an,an:an,b:b/bn,bn:bn});
+  });
+  if(!rows.length){el.innerHTML='<p class="empty">This needs at least 5 logged days with and without a habit. Keep logging and it fills in.</p>';return;}
+  rows.sort(function(x,y){return y.diff-x.diff;});
+  el.innerHTML=rows.map(function(r){
+    return '<div class="ins"><span class="nm">'+esc(r.name)+'</span><span class="df">'+(r.diff>=0?'+':'')+r.diff.toFixed(1)+'</span><small>Done: '+r.a.toFixed(1)+' over '+r.an+' days. Skipped: '+r.b.toFixed(1)+' over '+r.bn+' days.</small></div>';
+  }).join('');
+}
+function renderBars(){
+  var t=todayKey();
+  if(!state.habits.length){$('#bars').innerHTML='<p class="empty">Add a habit to see how steady you are.</p>';return;}
+  $('#bars').innerHTML=state.habits.map(function(h){
+    var c=0;for(var i=0;i<30;i++){if(isDone(h.id,addDays(t,-i)))c++;}
+    var pc=Math.round(c/30*100);
+    return '<div class="bar"><span class="nm">'+esc(h.name)+'</span><span class="pc">'+c+'/30 days · best '+longest(h.id)+'</span><div class="tr" role="img" aria-label="'+pc+' percent"><b style="width:'+pc+'%"></b></div></div>';
+  }).join('');
+}
+function renderAll(){renderTop();renderStats();renderMoods();renderHabits();moodChart();renderHeat();renderInsights();renderBars();}
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');
+  if(!el||el.disabled)return;
+  var act=el.getAttribute('data-act'),id=el.getAttribute('data-id');
+  if(act==='prev'){viewKey=addDays(viewKey,-1);pendingRemove=null;renderAll();return;}
+  if(act==='next'){if(viewKey<todayKey()){viewKey=addDays(viewKey,1);pendingRemove=null;renderAll();}return;}
+  if(act==='today'){viewKey=todayKey();pendingRemove=null;renderAll();return;}
+  if(act==='mood'){
+    var v=Number(el.getAttribute('data-v')),l=log(viewKey,true);
+    l.mood=(l.mood===v)?0:v;delete l.s;persist();return;
+  }
+  if(act==='toggle'){
+    var l2=log(viewKey,true),ix=l2.done.indexOf(id);
+    if(ix>=0)l2.done.splice(ix,1);else l2.done.push(id);
+    delete l2.s;persist();return;
+  }
+  if(act==='rename'){editing=id;pendingRemove=null;renderHabits();var ri=$('#rename-input');if(ri){ri.focus();ri.select();}return;}
+  if(act==='rm'){
+    if(pendingRemove===id){
+      clearTimeout(removeTimer);pendingRemove=null;
+      state.habits=state.habits.filter(function(h){return h.id!==id;});
+      for(var k in state.logs){var d=state.logs[k].done;if(d){var j=d.indexOf(id);if(j>=0)d.splice(j,1);}}
+      persist();
+    }else{
+      pendingRemove=id;renderHabits();
+      clearTimeout(removeTimer);removeTimer=setTimeout(function(){pendingRemove=null;renderHabits();},4000);
+    }
+    return;
+  }
+  if(act==='clear-sample'){
+    for(var k2 in state.logs){if(state.logs[k2].s)delete state.logs[k2];}
+    persist();return;
+  }
+});
+$('#addform').addEventListener('submit',function(e){
+  e.preventDefault();
+  var inp=$('#habit-name'),name=inp.value.trim();
+  if(!name||state.habits.length>=12)return;
+  state.habits.push({id:'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:name.slice(0,40)});
+  inp.value='';persist();
+});
+function commitRename(inp){
+  var id=inp.getAttribute('data-id');
+  if(editing!==id)return;
+  editing=null;
+  var name=inp.value.trim().slice(0,40);
+  if(name){
+    for(var i=0;i<state.habits.length;i++){if(state.habits[i].id===id)state.habits[i].name=name;}
+    persist();
+  }else{renderHabits();}
+}
+$('#habits').addEventListener('keydown',function(e){
+  if(!e.target.classList.contains('rn'))return;
+  if(e.key==='Enter'){e.preventDefault();commitRename(e.target);}
+  else if(e.key==='Escape'){editing=null;renderHabits();}
+});
+$('#habits').addEventListener('focusout',function(e){if(e.target.classList.contains('rn'))commitRename(e.target);});
+$('#note').addEventListener('input',function(e){
+  var l=log(viewKey,true);l.note=e.target.value;delete l.s;persist(false);
+});
+
+/* ---------- start ---------- */
+state=loadLocal()||fresh();
+saveLocal();
+renderAll();
+initRemote();
+})();
+</script>
+</body>
+</html>
